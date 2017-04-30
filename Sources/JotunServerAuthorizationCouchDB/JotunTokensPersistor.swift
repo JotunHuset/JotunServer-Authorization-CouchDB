@@ -1,9 +1,9 @@
 //
 //  JotunTokensPersistor.swift
-//  JotunServer
+//  JotunServer-Authorization-CouchDB
 //
-//  Created by Sergey on 4/27/17.
-//
+//  Created by Sergey Krasnozhon on 4/27/17.
+//  Copyright © 2017 Sergey Krasnozhon. All rights reserved.
 //
 
 import Foundation
