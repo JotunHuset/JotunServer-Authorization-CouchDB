@@ -32,38 +32,19 @@ public struct JotunTokensPersistor: JotunTokensPersisting {
         let parameters: [Database.QueryParameters] = [.keys([tokenValue as Valuetype])]
         database.queryByView(self.tokens.name, ofDesign: self.designName, usingParameters: parameters) {
             (document, error) in
-            guard let document = document else {
-                oncomplete(nil, JotunUserPersistingError.stogareError)
-                return
+            let result = QueryResultParser().parseFirstItem(from: document, withError: error)
+            switch result {
+            case .error(let error): oncomplete(nil, error)
+            case .item(let item): oncomplete(JotunUserToken.fromJson(item)?.userId, nil)
             }
-            
-            if let error = error {
-                oncomplete(nil, JotunUserPersistingError.generalError(error))
-                return
-            }
-            
-            guard let rows = document["rows"].array else {
-                oncomplete(nil, JotunUserPersistingError.stogareError)
-                return
-            }
-            
-            let values = rows.flatMap({ $0["value"] })
-            guard let first = values.first?.1, values.count < 2 else {
-                oncomplete(nil, JotunUserPersistingError.extraUsersFound)
-                return
-            }
-            oncomplete(JotunUserToken.fromJson(first)?.userId, nil)
         }
     }
     
     public func create(token: JotunUserToken, oncomplete: @escaping (JotunUserPersistingError?) -> Void) {
         let database = self.storeManager.database()
         database.create(token.toJson()) { (id, rev, document, error) in
-            if let _ = id {
-                oncomplete(nil)
-            } else {
-                oncomplete(JotunUserPersistingError.stogareError)
-            }
+            let error = QueryResultParser().validateResult(id: id, revision: rev, document: document, error: error)
+            oncomplete(error)
         }
     }
     
